@@ -1,0 +1,82 @@
+# Default configuration file for SExtractor 2.5.0
+# EB 2006-07-14
+#
+ 
+#-------------------------------- Catalog ------------------------------------
+ 
+CATALOG_NAME     SExtractor_OutputList.txt       # name of the output catalog
+CATALOG_TYPE     FITS_LDAC                       # NONE,ASCII,ASCII_HEAD, ASCII_SKYCAT,
+                                                 # ASCII_VOTABLE, FITS_1.0 or FITS_LDAC
+PARAMETERS_NAME  default.param                   # name of the file containing catalog contents
+ 
+#------------------------------- Extraction ----------------------------------
+ 
+DETECT_TYPE      CCD            # CCD (linear) or PHOTO (with gamma correction)
+DETECT_MINAREA   3              # minimum number of pixels above threshold # <20160217><dzliu> verified that MINAREA 3 misses 5 out of 18 S/N_galfit>3 sources, therefore MINAREA 2 is much better. 
+DETECT_THRESH    15             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+ANALYSIS_THRESH  15             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+ 
+FILTER           Y              # apply filter for detection (Y or N)?   ### THIS IS VERY IMPORTANT TO PREVENT FALSE DETECTIONS <DZLIU>
+FILTER_NAME      default.conv   # name of the file containing the filter
+ 
+DEBLEND_NTHRESH  32             # Number of deblending sub-thresholds
+DEBLEND_MINCONT  0.005          # Minimum contrast parameter for deblending
+ 
+CLEAN            Y              # Clean spurious detections? (Y or N)?
+CLEAN_PARAM      0.5            # Cleaning efficiency =1 Decreasing this to make more aggressive cleaning
+ 
+MASK_TYPE        CORRECT        # type of detection MASKing: can be one of
+                                # NONE, BLANK or CORRECT
+
+#-------------------------------- WEIGHTing ----------------------------------
+
+WEIGHT_TYPE      MAP_WEIGHT, MAP_RMS                           # type of WEIGHTing: NONE, BACKGROUND, MAP_RMS, MAP_VAR or MAP_WEIGHT. 1 or 2, first for detection, second for measurement. 
+RESCALE_WEIGHTS  N                                             # Rescale input weights/variances (Y/N)?
+WEIGHT_IMAGE     SExtractor_Weight.fits, SExtractor_Noise.fits # weight-map filename. 1 or 2, first for detection, second for measurement. 
+WEIGHT_GAIN      N                                             # if Y, weight map is considered as gain map
+WEIGHT_THRESH    1e+20                                         # weight threshold[s] for bad pixels, see IDL code
+
+#------------------------------ Photometry -----------------------------------
+ 
+PHOT_APERTURES   5              # MAG_APER aperture diameter(s) in pixels
+PHOT_AUTOPARAMS  2.5, 2.5       # MAG_AUTO parameters: <Kron_fact>,<min_radius>
+PHOT_PETROPARAMS 2.0, 2.5       # MAG_PETRO parameters: <Petrosian_fact>,<min_radius>
+ 
+SATUR_LEVEL      50000.0        # level (in ADUs) at which arises saturation
+ 
+MAG_ZEROPOINT    0.0            # magnitude zero-point
+MAG_GAMMA        4.0            # gamma of emulsion (for photographic scans)
+GAIN             0.0            # detector gain in e-/ADU
+PIXEL_SCALE      0.0            # size of pixel in arcsec (0=use FITS WCS info)
+ 
+#------------------------- Star/Galaxy Separation ----------------------------
+ 
+SEEING_FWHM      1.2            # stellar FWHM in arcsec
+STARNNW_NAME     default.nnw    # Neural-Network_Weight table filename
+ 
+#------------------------------ Background -----------------------------------
+ 
+BACK_SIZE        64             # Background mesh: <size> or <width>,<height>
+BACK_FILTERSIZE  3              # Background filter: <size> or <width>,<height>
+ 
+BACKPHOTO_TYPE   GLOBAL         # can be GLOBAL or LOCAL
+ 
+#------------------------------ Check Image ----------------------------------
+ 
+CHECKIMAGE_TYPE  MODELS, -MODELS, -BACKGROUND          # can be NONE, BACKGROUND, BACKGROUND_RMS,
+                                # MINIBACKGROUND, MINIBACK_RMS, -BACKGROUND,
+                                # FILTERED, OBJECTS, -OBJECTS, SEGMENTATION,
+                                # or APERTURES
+CHECKIMAGE_NAME  SExtractor_Model.fits,SExtractor_ModelRev.fits,SExtractor_BackgroundRev.fits     # Filename for the check-image
+ 
+#--------------------- Memory (change with caution!) -------------------------
+ 
+MEMORY_OBJSTACK  3000           # number of objects in stack
+MEMORY_PIXSTACK  300000         # number of pixels in stack
+MEMORY_BUFSIZE   1024           # number of lines in buffer
+ 
+#----------------------------- Miscellaneous ---------------------------------
+ 
+VERBOSE_TYPE     FULL                             # can be QUIET, NORMAL or FULL
+WRITE_XML        Y                                # Write XML file (Y/N)?
+XML_NAME         SExtractor_OutputList.xml        # Filename for XML output
