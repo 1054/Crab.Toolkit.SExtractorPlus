@@ -222,7 +222,7 @@ def main(
     # reformat out_catalog_file
     # output a ds9 region and a catfile
     out_region_file = os.path.join(working_dir, 'SExtractor_OutputCatalog.ds9.reg')
-    out_catfile = os.path.join(working_dir, 'SExtractor_OutputCatalog.csv')
+    out_catfile = os.path.join(working_dir, 'SExtractor_OutputCatalogXY.csv')
     if overwrite or not os.path.isfile(out_region_file) or not os.path.isfile(out_catfile):
         with open(out_region_file, 'w') as fp:
             fp.write('# DS9 Region file\n')
