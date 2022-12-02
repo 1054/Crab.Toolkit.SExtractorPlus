@@ -12,7 +12,7 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_area
-
+import logging
 
 
 
@@ -252,6 +252,7 @@ def main(
     out_figure_file = os.path.join(working_dir, 'SExtractor_OutputCatalog.quicklook.png')
     if make_plot and overwrite or not os.path.isfile(out_figure_file):
         import matplotlib as mpl
+        logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
         mpl.rcParams['axes.labelsize'] = '9' # https://matplotlib.org/users/customizing.html
         mpl.rcParams['axes.grid'] = False
         mpl.rcParams['axes.axisbelow'] = True
