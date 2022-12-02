@@ -7,16 +7,27 @@ import os, sys, re, copy, glob, shutil
 import click
 import numpy as np
 import subprocess
+import astropy.units as u
 from astropy.io import fits
 from astropy.table import Table
+from astropy.wcs import WCS
+from astropy.wcs.utils import proj_plane_pixel_area
 
 
 
 
 @click.command()
 @click.argument('image_file')
+@click.option('--detect-thresh', type=float, default=10.0, help='DETECT_THRESH in sigma.')
+@click.option('--analysis-thresh', type=float, default=4.0, help='ANALYSIS_THRESH in sigma.')
+@click.option('--detect-minradius', type=float, default=0.25, help='Set a min radius in arcsec to convert it to DETECT_MINAREA with pi * r^2.')
+@click.option('--phot-apertures', type=float, default=1.5, help='PHOT_APERTURES in arcsec')
 def main(
         image_file,
+        detect_thresh,
+        analysis_thresh,
+        detect_minradius,
+        phot_apertures,
     ):
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -60,6 +71,10 @@ def main(
         if np.count_nonzero(mask_zero_weight) > 0:
             sci_data[mask_zero_weight] = np.nan
             rms_data[mask_zero_weight] = np.nan
+    
+    # get wcs
+    wcs = WCS(sci_header, naxis=2)
+    pixsc = np.sqrt(proj_plane_pixel_area(wcs))*3600.0 # arcsec
     
     # create working directory
     working_dir = os.path.join(data_dir, data_name+'_run_sextractor_classic_dir')
@@ -111,6 +126,14 @@ def main(
         if filter_name is None:
             raise Exception('Error! Could not find FILTER key in the input fits file {!r}'.format(image_file))
         
+        # zeropoint
+        if 'PHOTMJSR' in main_header and 'PIXAR_SR' in main_header and 'BUNIT' in main_header and main_header['BUNIT']:
+            photmjsr = main_header['PHOTMJSR']
+            pixar_sr = main_header['PIXAR_SR']
+            ABMAG = ((1.0 * u.MJy/u.sr) * (pixar_sr * u.sr)).to(u.ABmag)
+            run_args.append('-MAG_ZEROPOINT')
+            run_args.append(str(ABMAG))
+        
         # find psf file
         psf_template_pattern = f'{default_dir}/*_{instrument}_{filter_name}_*.psf'
         psf_templates = glob.glob(psf_template_pattern)
@@ -125,17 +148,41 @@ def main(
             if not os.path.exists(default_psf_file):
                 os.symlink(psf_template_filename, default_psf_file)
             run_args.append('-PSF_NAME')
-            run_args.append('default.psf')
+            run_args.append(psf_template_filename) # 'default.psf'
         else:
             print('Warning! PSF template not found {!r}. Will not set a PSF for SExtractor.'.format(psf_template_pattern))
         
+        # SET DETECT_THRESH based on PSF size!
+        if detect_thresh > 0.0:
+            run_args.append('-DETECT_THRESH')
+            run_args.append('{:.3f}'.format(detect_thresh))
+        
+        # SET DETECT_THRESH based on PSF size!
+        if analysis_thresh > 0.0:
+            run_args.append('-ANALYSIS_THRESH')
+            run_args.append('{:.3f}'.format(analysis_thresh))
+        
+        # SET DETECT_MINAREA based on PSF size!
+        if detect_minradius > 0.0:
+            run_args.append('-DETECT_MINAREA')
+            run_args.append('{:.3f}'.format(np.pi * (detect_minradius / pixsc)**2))
+        
+        # SET DETECT_MINAREA based on PSF size!
+        if detect_minradius > 0.0:
+            run_args.append('-DETECT_MINAREA')
+            run_args.append('{:.3f}'.format(np.pi * (detect_minradius / pixsc)**2))
+        
+        # SET PHOT_APERTURES to 50pix*0.030arcsec=1.5arcsec
+        if phot_apertures > 0.0:
+            run_args.append('-PHOT_APERTURES')
+            run_args.append('{:.3f}'.format(phot_apertures / pixsc))
         
         # run SExtractor
         run_args_str = ' '.join(run_args)
         run_args_file = os.path.join(working_dir, 'run_args.sh')
         with open(run_args_file, 'w') as fp:
             fp.write(run_args_str + '\n')
-        print('Running args: {}'.format(run_args_str))
+        print('Running args: {} (saved to script {!r})'.format(run_args_str, run_args_file))
         subprocess.run(
             run_args,
             cwd = working_dir,
@@ -155,7 +202,7 @@ def main(
     # reformat out_catalog_file
     # output a ds9 region and a catfile
     out_region_file = os.path.join(working_dir, 'SExtractor_OutputCatalog.ds9.reg')
-    out_catfile = os.path.join(working_dir, 'SExtractor_OutputCatalog.cat')
+    out_catfile = os.path.join(working_dir, 'SExtractor_OutputCatalog.csv')
     if not os.path.isfile(out_region_file) or not os.path.isfile(out_catfile):
         out_catalog = Table.read(out_catalog_file)
         with open(out_region_file, 'w') as fp:
@@ -169,9 +216,9 @@ def main(
                 ))
             print('Output to region file: {!r}.'.format(out_region_file))
         with open(out_catfile, 'w') as fp:
-            fp.write('image\n')
+            fp.write('x,y\n')
             for i in range(len(out_catalog)):
-                fp.write('{:15.3f} {:15.3f}\n'.format(
+                fp.write('{:.3f},{:.3f}\n'.format(
                     out_catalog['XWIN_IMAGE'][i], 
                     out_catalog['YWIN_IMAGE'][i]
                 ))
