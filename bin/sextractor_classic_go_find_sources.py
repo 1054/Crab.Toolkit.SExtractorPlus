@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
-Run SExtractor classic, output to a subdirectory '{input_filename}_run_sextractor_classic_dir'
+Run SExtractor classic, output to a subdirectory '{input_filename}_run_sextractor_classic_dir'.
+
+For '_mirimage_cal' we have a special treatment about DQ array.
 """
 
 import os, sys, re, copy, glob, shutil
@@ -46,9 +48,11 @@ def main(
     sci_data = None
     rms_data = None
     wht_data = None
+    dq_data = None
     sci_header = None
     rms_header = None
     wht_header = None
+    dq_header = None
     main_header = None
     with fits.open(image_file) as hdul:
         main_header = copy.deepcopy(hdul[0].header)
@@ -68,6 +72,9 @@ def main(
                 elif hdu.header['EXTNAME'] == 'WHT':
                     wht_data = copy.copy(hdu.data)
                     wht_header = copy.deepcopy(hdu.header)
+                elif hdu.header['EXTNAME'] == 'DQ':
+                    dq_data = copy.copy(hdu.data)
+                    dq_header = copy.deepcopy(hdu.header)
     
     # 
     if sci_data is None:
@@ -79,6 +86,14 @@ def main(
         if np.count_nonzero(mask_zero_weight) > 0:
             sci_data[mask_zero_weight] = np.nan
             rms_data[mask_zero_weight] = np.nan
+    
+    # mask out non-zero-DQ pixels
+    if dq_data is not None:
+        if image_file.find('_mirimage_cal') > 0:
+            mask_nonzero_dq = np.logical_and(dq_data!=0, dq_data!=4) # 4 means jump
+            if np.count_nonzero(mask_nonzero_dq) > 0:
+                sci_data[mask_nonzero_dq] = np.nan
+                rms_data[mask_nonzero_dq] = np.nan
     
     # mask out zero-rms pixels
     if rms_data is not None:
