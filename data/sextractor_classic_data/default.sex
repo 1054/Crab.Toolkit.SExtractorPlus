@@ -16,8 +16,8 @@ DETECT_MINAREA   5              # minimum number of pixels above threshold
 DETECT_MAXAREA   0              # max. # of pixels above threshold (0=unlimited)
 THRESH_TYPE      RELATIVE       # threshold type: RELATIVE (in sigmas)
                                 # or ABSOLUTE (in ADUs)
-DETECT_THRESH    10.0           # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
-ANALYSIS_THRESH  5.0            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+DETECT_THRESH    6.0            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+ANALYSIS_THRESH  3.0            # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
  
 FILTER           Y              # apply filter for detection (Y or N)?
 FILTER_NAME      default.conv   # name of the file containing the filter
@@ -88,11 +88,13 @@ BACK_FILTTHRESH  0.0            # Threshold above which the background-
  
 #------------------------------ Check Image ----------------------------------
  
-CHECKIMAGE_TYPE  FILTERED, MODELS, -MODELS, -BACKGROUND          # can be NONE, BACKGROUND, BACKGROUND_RMS,
+CHECKIMAGE_TYPE  FILTERED, MODELS, -MODELS, -BACKGROUND, SEGMENTATION
+                                # can be NONE, BACKGROUND, BACKGROUND_RMS,
                                 # MINIBACKGROUND, MINIBACK_RMS, -BACKGROUND,
                                 # FILTERED, OBJECTS, -OBJECTS, SEGMENTATION,
                                 # or APERTURES
-CHECKIMAGE_NAME  SExtractor_Filtered.fits,SExtractor_Model.fits,SExtractor_ModelRev.fits,SExtractor_BackgroundRev.fits     # Filename for the check-image
+CHECKIMAGE_NAME  SExtractor_Filtered.fits,SExtractor_Model.fits,SExtractor_ModelSubtracted.fits,SExtractor_BackgroundSubtracted.fits,SExtractor_Segmentation.fits
+                                # Filename for the check-image
  
 #--------------------- Memory (change with caution!) -------------------------
  

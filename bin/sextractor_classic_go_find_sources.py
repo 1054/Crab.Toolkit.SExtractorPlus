@@ -18,9 +18,11 @@ import logging
 
 @click.command()
 @click.argument('image_file')
-@click.option('--detect-thresh', type=float, default=10.0, help='DETECT_THRESH in sigma.')
-@click.option('--analysis-thresh', type=float, default=4.0, help='ANALYSIS_THRESH in sigma.')
+@click.option('--detect-thresh', type=float, default=5.0, help='DETECT_THRESH in sigma.')
+@click.option('--analysis-thresh', type=float, default=2.0, help='ANALYSIS_THRESH in sigma.')
 @click.option('--detect-minradius', type=float, default=0.2, help='Set a min radius in arcsec to convert it to DETECT_MINAREA with pi * r^2.')
+@click.option('--detect-maxradius', type=float, default=3.0, help='Set a max radius in arcsec to convert it to DETECT_MAXAREA with pi * r^2.')
+@click.option('--deblend-mincont', type=float, default=0.1, help='Deblending min contrast fraction, DEBLEND_MINCONT. The higher the harder to deblend clumps.')
 @click.option('--phot-apertures', type=float, default=1.5, help='PHOT_APERTURES in arcsec')
 @click.option('--make-plot', is_flag=True, default=True, help='make plot')
 @click.option('--overwrite', is_flag=True, default=False, help='overwrite')
@@ -29,6 +31,8 @@ def main(
         detect_thresh,
         analysis_thresh,
         detect_minradius,
+        detect_maxradius,
+        deblend_mincont,
         phot_apertures,
         make_plot,
         overwrite,
@@ -168,30 +172,41 @@ def main(
         else:
             print('Warning! PSF template not found {!r}. Will not set a PSF for SExtractor.'.format(psf_template_pattern))
         
-        # SET DETECT_THRESH based on PSF size!
+        # SET DETECT_THRESH
         if detect_thresh > 0.0:
             run_args.append('-DETECT_THRESH')
             run_args.append('{:.3f}'.format(detect_thresh))
         
-        # SET DETECT_THRESH based on PSF size!
+        # SET ANALYSIS_THRESH
         if analysis_thresh > 0.0:
             run_args.append('-ANALYSIS_THRESH')
             run_args.append('{:.3f}'.format(analysis_thresh))
         
-        # SET DETECT_MINAREA based on PSF size!
+        # SET DETECT_MINAREA
         if detect_minradius > 0.0:
             run_args.append('-DETECT_MINAREA')
             run_args.append('{:.3f}'.format(np.pi * (detect_minradius / pixsc)**2))
         
-        # SET DETECT_MINAREA based on PSF size!
-        if detect_minradius > 0.0:
-            run_args.append('-DETECT_MINAREA')
-            run_args.append('{:.3f}'.format(np.pi * (detect_minradius / pixsc)**2))
+        # SET DETECT_MAXAREA
+        if detect_maxradius > 0.0:
+            run_args.append('-DETECT_MAXAREA')
+            run_args.append('{:.3f}'.format(np.pi * (detect_maxradius / pixsc)**2))
+        
+        # SET DEBLEND_MINCONT
+        if deblend_mincont > 0.0:
+            run_args.append('-DEBLEND_MINCONT')
+            run_args.append('{:.5g}'.format(deblend_mincont))
         
         # SET PHOT_APERTURES to 50pix*0.030arcsec=1.5arcsec
         if phot_apertures > 0.0:
             run_args.append('-PHOT_APERTURES')
             run_args.append('{:.3f}'.format(phot_apertures / pixsc))
+        
+        # set BACK_SIZE 1/10 image size
+        if True:
+            ny, nx = sci_data.shape
+            run_args.append('-BACK_SIZE')
+            run_args.append('{:.3f}'.format(int(max(nx, ny)/10.)))
         
         # run SExtractor
         run_args_str = ' '.join(run_args)
