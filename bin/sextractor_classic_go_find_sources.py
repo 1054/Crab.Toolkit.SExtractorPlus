@@ -89,7 +89,7 @@ def main(
     
     # mask out non-zero-DQ pixels
     if dq_data is not None:
-        if image_file.find('_mirimage_cal') > 0:
+        if image_file.find('_mirimage') > 0 and image_file.endswith('_cal.fits'):
             mask_nonzero_dq = np.logical_and(dq_data!=0, dq_data!=4) # 4 means jump
             if np.count_nonzero(mask_nonzero_dq) > 0:
                 sci_data[mask_nonzero_dq] = np.nan
