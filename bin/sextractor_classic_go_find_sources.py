@@ -20,6 +20,7 @@ import logging
 
 @click.command()
 @click.argument('image_file')
+@click.option('--output-dir', type=click.Path(exists=False), default='', help='Output directory. If not given then we will use "{image_file}_run_sextractor_classic_dir".')
 @click.option('--detect-thresh', type=float, default=5.0, help='DETECT_THRESH in sigma.')
 @click.option('--analysis-thresh', type=float, default=2.0, help='ANALYSIS_THRESH in sigma.')
 @click.option('--detect-minradius', type=float, default=0.2, help='Set a min radius in arcsec to convert it to DETECT_MINAREA with pi * r^2.')
@@ -30,6 +31,7 @@ import logging
 @click.option('--overwrite', is_flag=True, default=False, help='overwrite')
 def main(
         image_file,
+        output_dir,
         detect_thresh,
         analysis_thresh,
         detect_minradius,
@@ -106,7 +108,10 @@ def main(
     pixsc = np.sqrt(proj_plane_pixel_area(wcs))*3600.0 # arcsec
     
     # create working directory
-    working_dir = os.path.join(data_dir, data_name+'_run_sextractor_classic_dir')
+    if output_dir == '':
+        working_dir = os.path.join(data_dir, data_name+'_run_sextractor_classic_dir')
+    else:
+        working_dir = output_dir
     if not os.path.isdir(working_dir):
         os.makedirs(working_dir)
     
@@ -139,7 +144,10 @@ def main(
         default_file = os.path.join(working_dir, default_filename)
         default_template_file = os.path.join(default_dir, default_filename)
         if not os.path.isfile(default_file):
+            print('Copying {!r} -> {!r}'.format(default_template_file, default_file))
             shutil.copy(default_template_file, default_file)
+        else:
+            print('Using exsiting {!r}'.format(default_file))
     
     # check output file
     out_catalog_file = os.path.join(working_dir, 'SExtractor_OutputCatalog.fits')
