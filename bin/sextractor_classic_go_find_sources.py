@@ -170,12 +170,22 @@ def main(
             raise Exception('Error! Could not find FILTER key in the input fits file {!r}'.format(image_file))
         
         # zeropoint
-        if 'PHOTMJSR' in main_header and 'PIXAR_SR' in main_header and 'BUNIT' in main_header and main_header['BUNIT']:
-            photmjsr = main_header['PHOTMJSR']
-            pixar_sr = main_header['PIXAR_SR']
-            ABMAG = ((1.0 * u.MJy/u.sr) * (pixar_sr * u.sr)).to(u.ABmag)
-            run_args.append('-MAG_ZEROPOINT')
-            run_args.append(str(ABMAG))
+        #if 'PHOTMJSR' in main_header and 'PIXAR_SR' in main_header and 'BUNIT' in main_header and main_header['BUNIT']:
+        if ('BUNIT' in main_header): 
+            bunit = u.Unit(main_header['BUNIT'])
+            if bunit == u.Unit('MJy/sr'):
+                photmjsr = main_header['PHOTMJSR'] * u.MJy/u.sr # not needed here
+                pixar_sr = main_header['PIXAR_SR'] * u.sr
+                #pixar_sr = (pixsc * u.arcsec)**2  # this is also correct
+                ABMAG = ((1.0 * u.MJy/u.sr) * pixar_sr.to(u.sr)).to(u.ABmag).value
+                run_args.append('-MAG_ZEROPOINT')
+                run_args.append(str(ABMAG))
+                run_args.append('-PIXEL_SCALE')
+                run_args.append(str(pixsc))
+            elif bunit == u.Unit('10*nJy'):
+                ABMAG = (1.0 * 10*u.nJy).to(u.ABmag).value
+                run_args.append('-MAG_ZEROPOINT')
+                run_args.append(str(ABMAG))
         
         # find psf file
         psf_template_pattern = f'{default_dir}/*_{instrument}_{filter_name}_*.psf'
