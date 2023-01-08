@@ -27,6 +27,7 @@ import logging
 @click.option('--detect-maxradius', type=float, default=3.0, help='Set a max radius in arcsec to convert it to DETECT_MAXAREA with pi * r^2.')
 @click.option('--deblend-mincont', type=float, default=0.1, help='Deblending min contrast fraction, DEBLEND_MINCONT. The higher the harder to deblend clumps.')
 @click.option('--phot-apertures', type=float, default=1.5, help='PHOT_APERTURES in arcsec')
+@click.option('--nthreads', type=int, default=1, help='NTHREADS')
 @click.option('--make-plot', is_flag=True, default=True, help='make plot')
 @click.option('--overwrite', is_flag=True, default=False, help='overwrite')
 def main(
@@ -38,6 +39,7 @@ def main(
         detect_maxradius,
         deblend_mincont,
         phot_apertures,
+        nthreads, 
         make_plot,
         overwrite,
     ):
@@ -171,12 +173,16 @@ def main(
         
         # zeropoint
         #if 'PHOTMJSR' in main_header and 'PIXAR_SR' in main_header and 'BUNIT' in main_header and main_header['BUNIT']:
-        if ('BUNIT' in main_header): 
+        bunit = None
+        if (bunit is None) and ('BUNIT' in sci_header):
+            bunit = u.Unit(sci_header['BUNIT'])
+        if (bunit is None) and ('BUNIT' in main_header): 
             bunit = u.Unit(main_header['BUNIT'])
+        if (bunit is not None):
             if bunit == u.Unit('MJy/sr'):
-                photmjsr = main_header['PHOTMJSR'] * u.MJy/u.sr # not needed here
-                pixar_sr = main_header['PIXAR_SR'] * u.sr
-                #pixar_sr = (pixsc * u.arcsec)**2  # this is also correct
+                #photmjsr = sci_header['PHOTMJSR'] * u.MJy/u.sr # not needed here
+                #pixar_sr = sci_header['PIXAR_SR'] * u.sr
+                pixar_sr = (pixsc * u.arcsec)**2  # this is also correct
                 ABMAG = ((1.0 * u.MJy/u.sr) * pixar_sr.to(u.sr)).to(u.ABmag).value
                 run_args.append('-MAG_ZEROPOINT')
                 run_args.append(str(ABMAG))
@@ -240,6 +246,11 @@ def main(
             ny, nx = sci_data.shape
             run_args.append('-BACK_SIZE')
             run_args.append('{:.3f}'.format(int(max(nx, ny)/10.)))
+        
+        # SET NTHREADS
+        if nthreads > 0:
+            run_args.append('-NTHREADS')
+            run_args.append('{}'.format(nthreads))
         
         # run SExtractor
         run_args_str = ' '.join(run_args)
