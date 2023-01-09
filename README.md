@@ -17,6 +17,6 @@ Make sure you have SExtractor Classic command in your terminal.
 
 The default output directory will be `{input_image}_run_sextractor_classic_dir`. There will be a `SExtractor_OutputCatalogXY.csv` which contains the (x, y) pixel coordinates of each detected sources. 
 
-See `sextractor_classic_go_find_sources.py --help` for more options about detecting thresholds. 
+See `sextractor_classic_go_find_sources.py --help` for more options, e.g., detection thresholds, output directory name, etc. 
 
 
