@@ -26,7 +26,10 @@ import logging
 @click.option('--detect-minradius', type=float, default=0.2, help='Set a min radius in arcsec to convert it to DETECT_MINAREA with pi * r^2.')
 @click.option('--detect-maxradius', type=float, default=3.0, help='Set a max radius in arcsec to convert it to DETECT_MAXAREA with pi * r^2.')
 @click.option('--deblend-mincont', type=float, default=0.1, help='Deblending min contrast fraction, DEBLEND_MINCONT. The higher the harder to deblend clumps.')
-@click.option('--phot-apertures', type=float, default=1.5, help='PHOT_APERTURES in arcsec')
+@click.option('--phot-apertures', type=float, default=1.5, help='PHOT_APERTURES in arcsec.')
+@click.option('--back-size', type=float, default=None, help='BACK_SIZE in pixels. Overrides other --back-size-* options.')
+@click.option('--back-size-in-arcsec', type=float, default=None, help='BACK_SIZE in arcsec.')
+@click.option('--back-size-image-fraction', type=float, default=None, help='BACK_SIZE fraction to the image size.')
 @click.option('--nthreads', type=int, default=1, help='NTHREADS')
 @click.option('--make-plot', is_flag=True, default=True, help='make plot')
 @click.option('--overwrite', is_flag=True, default=False, help='overwrite')
@@ -39,6 +42,9 @@ def main(
         detect_maxradius,
         deblend_mincont,
         phot_apertures,
+        back_size, 
+        back_size_in_arcsec, 
+        back_size_image_fraction, 
         nthreads, 
         make_plot,
         overwrite,
@@ -243,9 +249,16 @@ def main(
         
         # set BACK_SIZE 1/10 image size
         if True:
-            ny, nx = sci_data.shape
+            if back_size_image_fraction is None:
+                back_size_image_fraction = 1. / 10.
+            if back_size is None:
+                if back_size_in_arcsec is not None:
+                    back_size = max(1 ,int(back_size_in_arcsec / pixsc))
+                else:
+                    ny, nx = sci_data.shape
+                    back_size = int(max(nx, ny) * back_size_image_fraction)
             run_args.append('-BACK_SIZE')
-            run_args.append('{:.3f}'.format(int(max(nx, ny)/10.)))
+            run_args.append('{:.0f}'.format(back_size))
         
         # SET NTHREADS
         if nthreads > 0:
