@@ -21,10 +21,10 @@ import logging
 @click.command()
 @click.argument('image_file')
 @click.option('--output-dir', type=click.Path(exists=False), default='', help='Output directory. If not given then we will use "{image_file}_run_sextractor_classic_dir".')
-@click.option('--detect-thresh', type=float, default=5.0, help='DETECT_THRESH in sigma.')
+@click.option('--detect-thresh', type=float, default=3.0, help='DETECT_THRESH in sigma.')
 @click.option('--analysis-thresh', type=float, default=2.0, help='ANALYSIS_THRESH in sigma.')
-@click.option('--detect-minradius', type=float, default=0.2, help='Set a min radius in arcsec to convert it to DETECT_MINAREA with pi * r^2.')
-@click.option('--detect-maxradius', type=float, default=3.0, help='Set a max radius in arcsec to convert it to DETECT_MAXAREA with pi * r^2.')
+@click.option('--detect-minradius', type=float, default=0.1, help='Set a min radius in arcsec to convert it to DETECT_MINAREA with pi * r^2.')
+@click.option('--detect-maxradius', type=float, default=5.0, help='Set a max radius in arcsec to convert it to DETECT_MAXAREA with pi * r^2.')
 @click.option('--deblend-mincont', type=float, default=0.1, help='Deblending min contrast fraction, DEBLEND_MINCONT. The higher the harder to deblend clumps.')
 @click.option('--phot-apertures', type=float, default=1.5, help='PHOT_APERTURES in arcsec.')
 @click.option('--back-size', type=float, default=None, help='BACK_SIZE in pixels. Overrides other --back-size-* options.')
@@ -246,6 +246,13 @@ def main(
         if phot_apertures > 0.0:
             run_args.append('-PHOT_APERTURES')
             run_args.append('{:.3f}'.format(phot_apertures / pixsc))
+        
+        # set WEIGHT_TYPE to None,None if rms_data is None
+        if rms_data is None:
+            run_args.append('-WEIGHT_TYPE')
+            run_args.append('"None,None"')
+            run_args.append('-WEIGHT_IMAGE')
+            run_args.append('""')
         
         # set BACK_SIZE 1/10 image size
         if True:
