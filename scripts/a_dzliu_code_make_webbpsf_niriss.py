@@ -1,9 +1,20 @@
 #!/usr/bin/env python
 # 20221202
+# 20250405
+#   WebbPSF Is Now Space Telescope PSF (STPSF)
+#   January 28, 2025
+#   https://www.stsci.edu/contents/news/jwst/2025/webbpsf-is-now-space-telescope-psf-stpsf
+# 
+# stpsf 2.0.0
+#   pip install -e git+https://github.com/spacetelescope/poppy.git#egg=poppy \
+#               -e git+https://github.com/spacetelescope/stpsf.git#egg=stpsf
+# 
 import os, copy, shutil
 import numpy as np
-os.environ['WEBBPSF_PATH'] = os.path.expanduser('~/Data/JWST-WebbPSF/webbpsf-data-1.1.0')
-import webbpsf
+#os.environ['WEBBPSF_PATH'] = os.path.expanduser('~/Data/JWST-WebbPSF/webbpsf-data')
+os.environ['STPSF_PATH'] = os.path.expanduser('~/Data/JWST-WebbPSF/stpsf-data') # 2.0.0 https://stpsf.readthedocs.io/en/stable/installation.html#data-install
+import stpsf
+webbpsf = stpsf
 from astropy.io import fits
 from astropy.table import Table
 oversample = 1
@@ -12,20 +23,20 @@ fov_pixels = 51
 pixsc_arcsec = None
 #pixsc_arcsec = 0.030
 #for filter_name in ['F090W', 'F115W', 'F150W', 'F200W', 'F277W', 'F300M', 'F335M', 'F356W', 'F360M', 'F410M', 'F444W']:
-for filter_name in ['F212N']:
+for filter_name in ['F150W']:
     suffix = ''
-    nc = webbpsf.NIRCam()
+    nc = webbpsf.NIRISS()
     nc.filter = filter_name
     if pixsc_arcsec is not None:
         nc.pixelscale = pixsc_arcsec
         suffix += '_pixsc{}'.format(pixsc_arcsec).replace('.','p')
     nc.options['parity'] = 'odd' # default
-    output_file = f"webbpsf_NIRCAM_{filter_name}_tiny{suffix}.fits"
+    output_file = f"webbpsf_NIRISS_{filter_name}_tiny{suffix}.fits"
     if not os.path.isfile(output_file) or overwrite:
         psf = nc.calc_psf(output_file, fov_pixels=fov_pixels, oversample=oversample)
         print(f"Output to {output_file}")
     
-    output_psf_file = f"webbpsf_NIRCAM_{filter_name}_tiny{suffix}.psf"
+    output_psf_file = f"webbpsf_NIRISS_{filter_name}_tiny{suffix}.psf"
     if not os.path.isfile(output_psf_file) or overwrite:
         with fits.open(output_file) as hdul:
             #psf_primary_hdu = fits.PrimaryHDU(header=hdul[0].header)
