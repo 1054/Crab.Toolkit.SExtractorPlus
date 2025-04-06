@@ -172,6 +172,8 @@ def main(
             instrument = main_header['INSTRUME']
         if 'FILTER' in main_header:
             filter_name = main_header['FILTER']
+        if filter_name == 'CLEAR' and 'PUPIL' in main_header: # 20250406 for grism direct imaging
+            filter_name = main_header['PUPIL']
         if instrument is None:
             raise Exception('Error! Could not find INSTRUME key in the input fits file {!r}'.format(image_file))
         if filter_name is None:
